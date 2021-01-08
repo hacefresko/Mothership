@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>M0th3rsh1p</title>
+        <style>
+            * {
+                text-align: center;
+                color: rgb(46, 237, 52);
+                font-family: sans-serif;
+                background-color: rgb(15, 15, 15)
+            }
+            .code{
+                white-space: pre-line; /* for \n to have effect */
+                font-family: monospace;
+                background-color: rgb(0, 0, 0);
+                text-align: left;
+                margin: 10px;
+            }
+            #commandline {
+                overflow-y: scroll;
+                word-wrap: break-word;  /* For the text not to overflow by side */
+                background-color: rgb(0, 0, 0);
+                border-style: ridge;
+                border-color: rgb(255, 255, 255);
+                margin: auto;
+                margin-top: 10px;
+                width: 500px;
+                height: 350px;
+            }
+            #input{
+                border-style: ridge;
+                border-color: rgb(255, 255, 255);
+                width: 500px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>M0th3rsh1p</h1>
+        <p>Victim's IP: {{ victim.remoteAddress }}</p><button onclick="location.pathname = '/'">Go back</button>
+        <div id="commandline">
+            <p id="command" class="code">{{ commandLine }}</p>
+        </div>
+        <form action='#' method="POST">
+            <input type="text" name="command" id="input" class="code" autofocus>
+        </form>
+    </body>
+</html>

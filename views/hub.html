@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>M0th3rsh1p</title>
+        <style>
+            * {
+                text-align: center;
+                color: rgb(46, 237, 52);
+                font-family: sans-serif;
+                background-color: rgb(15, 15, 15);
+            }
+            #list{
+                margin: auto;
+                width: 200px;
+            }
+            .listElement{
+                text-align: left;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>M0th3rsh1p</h1>
+        <p>Victims:</p>
+        <ul id="list">
+            {% for victim in victims %}
+              <li class="listElement"><a href="{{ victim.remoteAddress }}">{{ victim.remoteAddress }}</a></li>
+            {% endfor %}
+        </ul>
+    </body>
+    <script>
+        setTimeout(reload, 3000);
+        function reload(){
+            location.reload();
+        }
+    </script>
+</html>

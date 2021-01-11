@@ -9,6 +9,9 @@
                 font-family: sans-serif;
                 background-color: rgb(15, 15, 15)
             }
+            .button{
+                display: inline-block;
+            }
             .code{
                 white-space: pre-line; /* for \n to have effect */
                 font-family: monospace;
@@ -24,19 +27,23 @@
                 border-color: rgb(255, 255, 255);
                 margin: auto;
                 margin-top: 10px;
-                width: 500px;
-                height: 350px;
+                width: 600px;
+                height: 400px;
             }
             #input{
                 border-style: ridge;
                 border-color: rgb(255, 255, 255);
-                width: 500px;
+                width: 600px;
             }
         </style>
     </head>
     <body>
         <h1>M0th3rsh1p</h1>
-        <p>Victim's IP: {{ victim.socket.remoteAddress }}</p><button onclick="location.pathname = '/'">Go back</button>
+        <p>Victim's IP: {{ victim.socket.remoteAddress }}</p>
+        <button class="button" onclick="location.pathname = '/'">Go back</button>
+        <form class="button" action="/{{ victim.socket.remoteAddress }}/disconnect" method="POST">
+            <input type="submit" value="Disconnect" />
+        </form>
         <div id="commandline">
             <p id="command" class="code">{{ commandLine }}</p>
         </div>

